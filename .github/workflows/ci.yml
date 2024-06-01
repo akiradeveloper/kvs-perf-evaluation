@@ -1,0 +1,18 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Compile
+        run: cargo build --release -p sled
+      - name: Bench
+        run: sh run_sled.sh

@@ -5,19 +5,21 @@ use std::time::{Duration, Instant};
 
 #[derive(Parser)]
 struct Opts {
-    n: usize,
+    n_lanes: usize,
+    datalen: usize,
+    #[clap(long, default_value = "5")]
     du: u16,
 }
 fn main() {
     let opts = Opts::parse();
     let (collector, q) = Collector::new();
 
-    for lane_id in 0..opts.n {
+    for lane_id in 0..opts.n_lanes {
         let mut reporter = Reporter::new(q.clone());
         std::thread::spawn(move || loop {
             reporter.start();
             std::thread::yield_now();
-            reporter.stop(1);
+            reporter.stop(opts.datalen);
         });
     }
 
