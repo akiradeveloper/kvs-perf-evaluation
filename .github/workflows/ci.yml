@@ -13,6 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Compile
-        run: cargo build --release -p sled
+        run: cargo build --release --bin sled
       - name: Bench
         run: sh run_sled.sh
