@@ -2,7 +2,8 @@
 resolver = "2"
 members = [
   "redb",
-  "sled"
+  "sled",
+  "stats"
 ]
 
 [workspace.dependencies]
@@ -10,3 +11,4 @@ crossbeam = "0.8.4"
 serde = "1"
 clap = { version = "4.5.4", features = ["derive"] }
 tokio = "1.37"
+stats = { path = "stats" }
