@@ -1,8 +1,7 @@
-use std::time::{Duration, Instant};
-use std::sync::mpsc;
 use clap::Parser;
-use std::sync::Arc;
 use crossbeam::queue::SegQueue;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 #[derive(Parser)]
 struct Opts {
@@ -11,71 +10,66 @@ struct Opts {
 }
 fn main() {
     let opts = Opts::parse();
-    let (stats, collector, tx) = Collector::new();
-    collector.start();
+    let (collector, q) = Collector::new();
 
     for lane_id in 0..opts.n {
-        let mut reporter = Reporter::new(tx.clone());
-        std::thread::spawn(move || {
-            loop {
-                reporter.start();
-                std::thread::yield_now();
-                reporter.stop();
-            }
+        let mut reporter = Reporter::new(q.clone());
+        std::thread::spawn(move || loop {
+            reporter.start();
+            std::thread::yield_now();
+            reporter.stop(1);
         });
     }
 
-    std::thread::sleep(Duration::from_secs(opts.du as u64));
-    eprintln!("{}", stats.show());
+    let du = Duration::from_secs(opts.du as u64);
+    std::thread::sleep(du);
+    eprintln!("{}", collector.show(du));
 }
 
-pub struct Stats {
-    q: Arc<SegQueue<Duration>>,
-}
-impl Stats {
-    pub fn show(self) -> String {
-        format!("n={}", self.q.len())
-    }
+pub type Queue = Arc<SegQueue<Packet>>;
+
+pub struct Packet {
+    pub time: Duration,
+    pub length: usize,
 }
 
-pub struct Packet(Duration);
-
-struct Collector {
-    q: Arc<SegQueue<Duration>>,
-    rx: mpsc::Receiver<Packet>,
+pub struct Collector {
+    q: Queue,
 }
 impl Collector {
-    pub fn new() -> (Stats, Collector, mpsc::Sender<Packet>) {
-        let (tx, rx) = mpsc::channel();
+    pub fn new() -> (Self, Queue) {
         let q = Arc::new(SegQueue::new());
-        let stats = Stats { q: q.clone() };
-        let collector = Collector {
-            q,
-            rx,
-        };
-        (stats, collector, tx)
+        let this = Self { q: q.clone() };
+        (this, q)
     }
 
-    pub fn start(self) {
-        std::thread::spawn(move || {
-            loop {
-                let packet = self.rx.recv().unwrap();
-                self.q.push(packet.0);
-            }
-        });
+    pub fn show(self, du: Duration) -> String {
+        let mut n = 0;
+        let mut sum_time = Duration::ZERO;
+        let mut sum_amt = 0; // bytes
+        let n = self.q.len();
+        let mut remaining = n;
+        while remaining > 0 {
+            let packet = self.q.pop().unwrap();
+            sum_amt += packet.length;
+            sum_time += packet.time;
+            remaining -= 1;
+        }
+
+        let latency = sum_time / n as u32;
+        // kB/s
+        let throughput = sum_amt as f64 / du.as_millis() as f64;
+        format!("throughput {throughput} kB/s, latency {latency:?}")
     }
 }
 
 pub struct Reporter {
-    tx: mpsc::Sender<Packet>,
+    q: Queue,
     cur: Option<Instant>,
 }
 impl Reporter {
-    pub fn new(tx: mpsc::Sender<Packet>) -> Self {
-        Self {
-            tx,
-            cur: None,
-        }
+    pub fn new(q: Queue) -> Self {
+        Self { q, cur: None }
     }
 
     pub fn start(&mut self) {
@@ -84,9 +78,12 @@ impl Reporter {
         self.cur = Some(now);
     }
 
-    pub fn stop(&mut self) {
+    pub fn stop(&mut self, n: usize) {
         let old = self.cur.take().unwrap();
         let elapsed = old.elapsed();
-        self.tx.send(Packet(elapsed)).unwrap();
+        self.q.push(Packet {
+            time: elapsed,
+            length: n,
+        })
     }
 }
