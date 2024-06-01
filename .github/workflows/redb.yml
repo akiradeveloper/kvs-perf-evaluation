@@ -1,4 +1,4 @@
-name: Sled (Bench)
+name: ReDB (Bench)
 
 on:
   push:
@@ -13,6 +13,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Compile
-        run: cargo build --release --bin sled
+        run: cargo build --release --bin redb
       - name: Bench
-        run: sh bench_sled.sh
+        run: sh bench_redb.sh

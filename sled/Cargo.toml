@@ -7,6 +7,5 @@ edition = "2021"
 
 [dependencies]
 clap.workspace = true
-serde.workspace = true
 sled = "1.0.0-alpha.121"
 stats.workspace = true

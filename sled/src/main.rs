@@ -19,13 +19,15 @@ fn main() {
     for lane_id in 0..opts.n_lanes {
         let tree = db.open_tree(format!("id={lane_id}")).unwrap();
         let mut reporter = stats::Reporter::new(q.clone());
-        std::thread::spawn(move || for i in 0.. {
-            let k = i.to_string();
-            let v = stats::randbytes(opts.datalen);
+        std::thread::spawn(move || {
+            for i in 0.. {
+                let k = i.to_string();
+                let v = stats::randbytes(opts.datalen);
 
-            reporter.start();
-            tree.insert(&k, v).unwrap();
-            reporter.stop(opts.datalen);
+                reporter.start();
+                tree.insert(&k, v).unwrap();
+                reporter.stop(opts.datalen);
+            }
         });
     }
 
@@ -33,4 +35,3 @@ fn main() {
     std::thread::sleep(du);
     eprintln!("{}", collector.show(du));
 }
-
