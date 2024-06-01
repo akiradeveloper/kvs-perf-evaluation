@@ -13,8 +13,7 @@ fn main() {
     let opts = Opts::parse();
     let (collector, q) = stats::Collector::new();
 
-    std::fs::remove_dir_all("db").ok();
-    std::fs::create_dir("db").unwrap();
+    std::fs::remove_file("db").ok();
     let db = Arc::new(redb::Database::create("db").unwrap());
 
     for lane_id in 0..opts.n_lanes {
