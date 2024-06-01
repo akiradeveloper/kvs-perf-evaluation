@@ -1,4 +1,5 @@
 EXE=target/release/sled
-$EXE 4 10
-$EXE 4 100
-$EXE 4 1000
+for n in 1 10 100 1000 10000 100000 1000000
+do
+    $EXE 4 $n
+end

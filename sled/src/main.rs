@@ -71,9 +71,9 @@ impl Collector {
         }
 
         let latency = sum_time / n as u32;
-        // kB/s
-        let throughput = sum_amt as f64 / du.as_millis() as f64;
-        format!("throughput {throughput} kB/s, latency {latency:?}")
+        // MB/s
+        let throughput = (sum_amt as f64 / du.as_millis() as f64) / 1000.;
+        format!("throughput {throughput} MB/s, latency {latency:?}")
     }
 }
 
