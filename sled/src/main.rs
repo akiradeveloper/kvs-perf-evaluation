@@ -14,6 +14,7 @@ fn main() {
     let opts = Opts::parse();
     let (collector, q) = Collector::new();
 
+    std::fs::remove_dir_all("db").ok();
     std::fs::create_dir("db").unwrap();
     let db: sled::Db = sled::Config::new().path("db").open().unwrap();
 
