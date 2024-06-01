@@ -26,6 +26,7 @@ fn main() {
 
                 reporter.start();
                 tree.insert(&k, v).unwrap();
+                tree.flush().unwrap();
                 reporter.stop(opts.datalen);
             }
         });
