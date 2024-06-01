@@ -14,11 +14,18 @@ fn main() {
     let opts = Opts::parse();
     let (collector, q) = Collector::new();
 
+    std::fs::create_dir("db").unwrap();
+    let db: sled::Db = sled::Config::new().path("db").open().unwrap();
+
     for lane_id in 0..opts.n_lanes {
+        let tree = db.open_tree(format!("id={lane_id}")).unwrap();
         let mut reporter = Reporter::new(q.clone());
-        std::thread::spawn(move || loop {
+        std::thread::spawn(move || for i in 0.. {
+            let k = i.to_string();
+            let v = randbytes(opts.datalen);
+
             reporter.start();
-            std::thread::yield_now();
+            tree.insert(&k, v).unwrap();
             reporter.stop(opts.datalen);
         });
     }
@@ -26,6 +33,10 @@ fn main() {
     let du = Duration::from_secs(opts.du as u64);
     std::thread::sleep(du);
     eprintln!("{}", collector.show(du));
+}
+
+pub fn randbytes(n: usize) -> Vec<u8> {
+    vec![0; n]
 }
 
 pub type Queue = Arc<SegQueue<Packet>>;
