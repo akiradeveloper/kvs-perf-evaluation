@@ -13,22 +13,23 @@ fn main() {
     let (collector, q) = stats::Collector::new();
 
     std::fs::remove_dir_all("db").ok();
-    std::fs::create_dir("db").unwrap();
-    let db: sled::Db = sled::Config::new()
-    .path("db")
-    .flush_every_ms(Some(50))
-    .open().unwrap();
 
     for lane_id in 0..opts.n_lanes {
-        let tree = db.open_tree(format!("id={lane_id}")).unwrap();
+        let column_name = format!("id={lane_id}");
+        let column = rocksdb::ColumnFamilyDescriptor::new(column_name, rocksdb::Options::default());
+
+        let mut options = rocksdb::Options::default();
+        options.create_if_missing(true);
+        options.create_missing_column_families(true);
+        let db = rocksdb::DB::open_cf_descriptors(&options, "db", [column]).unwrap();
+
         let mut reporter = stats::Reporter::new(q.clone());
         std::thread::spawn(move || {
             for i in 0.. {
-                let k = i.to_string();
+                let k = format!("{i}");
                 let v = stats::randbytes(opts.datalen);
-
                 reporter.start();
-                tree.insert(&k, v).unwrap();
+                db.put(k, v).unwrap();
                 reporter.stop(opts.datalen);
             }
         });
