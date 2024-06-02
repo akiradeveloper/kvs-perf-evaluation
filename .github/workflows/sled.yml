@@ -15,4 +15,4 @@ jobs:
       - name: Compile
         run: cargo build --release --bin sled
       - name: Bench
-        run: sh bench_sled.sh
+        run: EXE=target/release/sled sh bench.sh

@@ -15,4 +15,4 @@ jobs:
       - name: Compile
         run: cargo build --release --bin rocksdb
       - name: Bench
-        run: sh bench_rocksdb.sh
+        run: EXE=target/release/rocksdb sh bench.sh

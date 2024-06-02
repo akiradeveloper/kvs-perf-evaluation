@@ -15,4 +15,4 @@ jobs:
       - name: Compile
         run: cargo build --release --bin redb
       - name: Bench
-        run: sh bench_redb.sh
+        run: EXE=target/release/redb sh bench.sh
