@@ -15,6 +15,10 @@ fn main() {
 
     std::fs::remove_file("db").ok();
     let db = Arc::new(redb::Database::create("db").unwrap());
+    
+    let mut tx = db.begin_write().unwrap();
+    tx.set_durability(redb::Durability::Eventual);
+    tx.commit().unwrap();
 
     for lane_id in 0..opts.n_lanes {
         let db = db.clone();
