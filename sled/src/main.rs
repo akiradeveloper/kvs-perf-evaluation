@@ -15,9 +15,10 @@ fn main() {
     std::fs::remove_dir_all("db").ok();
     std::fs::create_dir("db").unwrap();
     let db: sled::Db = sled::Config::new()
-    .path("db")
-    .flush_every_ms(Some(1))
-    .open().unwrap();
+        .path("db")
+        .flush_every_ms(Some(100))
+        .open()
+        .unwrap();
 
     for lane_id in 0..opts.n_lanes {
         let tree = db.open_tree(format!("id={lane_id}")).unwrap();

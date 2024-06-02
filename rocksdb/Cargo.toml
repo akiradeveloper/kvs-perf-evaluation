@@ -8,4 +8,4 @@ edition = "2021"
 [dependencies]
 clap.workspace = true
 stats.workspace = true
-rocksdb = "0.22"
+rocksdb = { version ="0.22", features = ["multi-threaded-cf"] }
