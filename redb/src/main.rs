@@ -57,7 +57,7 @@ fn main() {
     };
     std::thread::spawn(move || {
         loop {
-            reaper.reap(Duration::from_millis(100)).ok();
+            reaper.reap(Duration::from_millis(10)).ok();
         }
     });
 
