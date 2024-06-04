@@ -1,7 +1,6 @@
 use clap::Parser;
 use std::sync::Arc;
 use std::time::{Instant, Duration};
-use std::sync::mpsc;
 use anyhow::Result;
 
 struct LazyInsert {
@@ -12,7 +11,7 @@ struct LazyInsert {
 }
 struct Reaper {
     db: Arc<redb::Database>,
-    recv: mpsc::Receiver<LazyInsert>,
+    recv: flume::Receiver<LazyInsert>,
 }
 impl Reaper {
     fn table_def(space: &str) -> redb::TableDefinition<u64, Vec<u8>> {
@@ -20,19 +19,20 @@ impl Reaper {
     }
     fn reap(&self, du: Duration) -> Result<()> {
         // wait for a entry
-        let fst = self.recv.recv()?;
+        let head = self.recv.recv()?;
+        let tail = self.recv.drain();
 
-        let tx = self.db.begin_write()?;
         let mut notifiers = vec![];
+        let tx = self.db.begin_write()?;
 
         // insert the first entry
         {
-            let mut tbl = tx.open_table(Self::table_def(&fst.space))?;
-            tbl.insert(fst.index, fst.bin)?;
-            notifiers.push(fst.notifier);
+            let mut tbl = tx.open_table(Self::table_def(&head.space))?;
+            tbl.insert(head.index, head.bin)?;
+            notifiers.push(head.notifier);
         }
 
-        while let Ok(e) = self.recv.try_recv() {
+        for e in tail {
             let mut tbl = tx.open_table(Self::table_def(&e.space))?;
             tbl.insert(e.index, e.bin)?;
             notifiers.push(e.notifier);
@@ -62,7 +62,7 @@ fn main() {
     let mem = redb::backends::InMemoryBackend::new();
     let db = Arc::new(redb::Database::builder().create_with_backend(mem).unwrap());
     
-    let (tx, rx) = mpsc::channel();
+    let (tx, rx) = flume::unbounded();
     let reaper = Reaper {
         db: db.clone(),
         recv: rx,
