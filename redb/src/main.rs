@@ -51,7 +51,7 @@ impl Reaper {
 struct Opts {
     n_lanes: usize,
     datalen: usize,
-    #[clap(long, default_value = "5")]
+    #[clap(long, default_value = "10")]
     du: u16,
 }
 fn main() {
