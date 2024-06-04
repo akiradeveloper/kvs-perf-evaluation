@@ -68,7 +68,7 @@ fn main() {
     };
     std::thread::spawn(move || {
         loop {
-            reaper.reap(Duration::from_micros(1000)).ok();
+            reaper.reap(Duration::from_micros(100)).ok();
         }
     });
 
