@@ -19,9 +19,20 @@ impl Reaper {
         redb::TableDefinition::new(space)
     }
     fn reap(&self, du: Duration) -> Result<()> {
+        // wait for a entry
+        let fst = self.recv.recv()?;
+
         let deadline = Instant::now() + du;
         let mut notifiers = vec![];
         let tx = self.db.begin_write()?;
+
+        // insert the first entry
+        {
+            let mut tbl = tx.open_table(Self::table_def(&fst.space))?;
+            tbl.insert(fst.index, fst.bin)?;
+            notifiers.push(fst.notifier);
+        }
+
         while let Ok(e) = self.recv.recv_timeout(deadline - Instant::now()) {
             let mut tbl = tx.open_table(Self::table_def(&e.space))?;
             tbl.insert(e.index, e.bin)?;
@@ -57,7 +68,7 @@ fn main() {
     };
     std::thread::spawn(move || {
         loop {
-            reaper.reap(Duration::from_millis(10)).ok();
+            reaper.reap(Duration::from_millis(1)).ok();
         }
     });
 
