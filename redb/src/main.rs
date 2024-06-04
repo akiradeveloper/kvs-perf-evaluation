@@ -22,9 +22,8 @@ impl Reaper {
         // wait for a entry
         let fst = self.recv.recv()?;
 
-        let deadline = Instant::now() + du;
-        let mut notifiers = vec![];
         let tx = self.db.begin_write()?;
+        let mut notifiers = vec![];
 
         // insert the first entry
         {
@@ -33,6 +32,7 @@ impl Reaper {
             notifiers.push(fst.notifier);
         }
 
+        let deadline = Instant::now() + du;
         while let Ok(e) = self.recv.recv_timeout(deadline - Instant::now()) {
             let mut tbl = tx.open_table(Self::table_def(&e.space))?;
             tbl.insert(e.index, e.bin)?;
@@ -68,7 +68,7 @@ fn main() {
     };
     std::thread::spawn(move || {
         loop {
-            reaper.reap(Duration::from_millis(1)).ok();
+            reaper.reap(Duration::from_micros(100)).ok();
         }
     });
 
