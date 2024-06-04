@@ -32,8 +32,7 @@ impl Reaper {
             notifiers.push(fst.notifier);
         }
 
-        let deadline = Instant::now() + du;
-        while let Ok(e) = self.recv.recv_timeout(deadline - Instant::now()) {
+        while let Ok(e) = self.recv.try_recv() {
             let mut tbl = tx.open_table(Self::table_def(&e.space))?;
             tbl.insert(e.index, e.bin)?;
             notifiers.push(e.notifier);
