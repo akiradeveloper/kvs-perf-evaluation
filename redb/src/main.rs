@@ -58,7 +58,9 @@ fn main() {
     let (collector, q) = stats::Collector::new();
 
     std::fs::remove_file("db").ok();
-    let db = Arc::new(redb::Database::create("db").unwrap());
+    // let db = Arc::new(redb::Database::create("db").unwrap());
+    let mem = redb::backends::InMemoryBackend::new();
+    let db = Arc::new(redb::Database::builder().create_with_backend(mem).unwrap());
     
     let (tx, rx) = mpsc::channel();
     let reaper = Reaper {
